@@ -4,7 +4,7 @@ FastAPI todo app Crud Operation API's
 
 from typing import Annotated, Union
 
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Form
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -61,21 +61,22 @@ def read_todos(
 
 @app.post("/new/todo/")
 def create_new_todo(
-    session: Annotated[Session, Depends(get_session)], todo: CreateTodo
-) -> Todo:
+    session: Annotated[Session, Depends(get_session)],
+    title: str = Form(...),
+    completed: bool = Form(...),
+):
     """Create new todo
 
     Args:
-        todo (Todo)
+        title (str): Todo title from form
+        completed (bool): Status from form
     """
-    # new_todo = Todo(title=todo.title,completed=todo.completed)
-    new_todo = Todo(title=todo.title, completed=False)
+    new_todo = Todo(title=title, completed=completed)
     session.add(new_todo)
     try:
         session.commit()
         session.refresh(new_todo)
     except Exception as e:
-        # Undo partial changes if error happens
         session.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
